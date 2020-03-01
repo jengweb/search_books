@@ -1,0 +1,84 @@
+version: "3.5"
+services:
+  nginx:
+    container_name: nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    volumes:
+      - ./nginx/config/site.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 80:80
+      - 443:443
+    links:
+      - kibana
+      - goelasticsearch
+    networks:
+      - esnet
+    restart: always
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.0
+    container_name: es01
+    environment:
+      - node.name=es01
+      - discovery.seed_hosts=es02
+      - cluster.initial_master_nodes=es01,es02
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - ES_JAVA_OPTS=-Xms256m -Xmx256m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./esdata01:/usr/share/elasticsearch/data
+    restart: always
+    networks:
+      - esnet
+  es02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.0
+    container_name: es02
+    environment:
+      - node.name=es02
+      - discovery.seed_hosts=es01
+      - cluster.initial_master_nodes=es01,es02
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - ES_JAVA_OPTS=-Xms256m -Xmx256m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./esdata02:/usr/share/elasticsearch/data
+    restart: always
+    networks:
+      - esnet
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.6.0
+    container_name: kibana
+    links:
+      - es01:elasticsearch
+    ports:
+      - 5601:5601
+    depends_on:
+      - es01
+      - es02
+    networks:
+      - esnet
+  goelasticsearch:
+    container_name: goelasticsearch
+    build: ./goelasticsearch
+    volumes:
+      - ./goelasticsearch:/go/src/goelasticsearch
+    working_dir: /go/src/goelasticsearch/app
+    depends_on:
+      - es01
+      - es02
+    networks:
+      - esnet
+    command: sh docker-entrypoint.sh
+    restart: always
+
+networks:
+  esnet:
