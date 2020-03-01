@@ -41,6 +41,12 @@ Search Book
 ```
 Method: GET
 URL: localhost/search?query=Elasticsearch
+
+command line test
+curl -X GET \
+  'http://goelasticsearch.test/search?query=Elasticsearch' \
+  -H 'Postman-Token: 434b99da-abbc-42d9-a38c-2f0cb596f54e' \
+  -H 'cache-control: no-cache'
 ```
 
 Update Book
