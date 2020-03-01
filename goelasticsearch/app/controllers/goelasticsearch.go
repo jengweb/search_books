@@ -28,8 +28,7 @@ type GoElasticsearchController struct{}
 
 func (controller *GoElasticsearchController) GetGoElasticsearch(contexts ElasticsearchContextInterface, request *http.Request) {
 	log.SetFlags(0)
-	bookName, _ := contexts.GetQuery("bookname")
-	log.Println(bookName)
+	querys, _ := contexts.GetQuery("query")
 	var (
 		results map[string]interface{}
 	)
@@ -61,7 +60,7 @@ func (controller *GoElasticsearchController) GetGoElasticsearch(contexts Elastic
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"multi_match": map[string]interface{}{
-				"query":  bookName,
+				"query":  querys,
 				"fields": []string{"title", "isbn", "author_name"},
 			},
 		},
@@ -153,6 +152,7 @@ func (controller *GoElasticsearchController) PostGoElasticsearch(contexts Elasti
 
 func (controller *GoElasticsearchController) UpdateGoElasticsearch(contexts ElasticsearchContextInterface, request *http.Request) {
 	dataInput, _ := contexts.GetPostForm("data")
+	documentID, _ := contexts.GetPostForm("_id")
 	cfg := elasticsearch.Config{
 		Addresses: []string{
 			"http://es01:9200",
@@ -168,7 +168,7 @@ func (controller *GoElasticsearchController) UpdateGoElasticsearch(contexts Elas
 	b.WriteString(dataInput)
 	req := esapi.IndexRequest{
 		Index:      "store",
-		DocumentID: "KbqilnAB1DYbAWo8f7zJ",
+		DocumentID: documentID,
 		Body:       strings.NewReader(b.String()),
 		Refresh:    "true",
 	}
